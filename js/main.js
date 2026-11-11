@@ -44,6 +44,8 @@ try {
   new ColorTooltip(document.querySelector('#viewport'), document.querySelector('#color-tooltip'), manager, navigation);
   const notifications = new Notifications(document.querySelector('#notifications'));
   const achievements = new Achievements(document.querySelector('#achievements-dialog'), manager, savedAchievements);
+  const newSpatialAchievements = await achievements.reconcileSpatial();
+  for (const achievement of newSpatialAchievements) notifications.showAchievement(achievement);
   new Trophies(document.querySelector('#trophies-dialog'), manager);
   const game = new Game(manager, renderer, db, elements, notifications, () => settings.theme, id => navigation.flash(id), achievements, getLanguage);
   settings.onChange = () => game.saveSettings();
@@ -59,6 +61,7 @@ try {
   elements.pause.addEventListener('click', () => game.togglePause());
   document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'hidden') void game.flush(); });
   window.addEventListener('pagehide', () => { void game.flush(); });
+  if (newSpatialAchievements.length) game.saveSettings();
   game.start();
 } catch (error) {
   console.error(error);
