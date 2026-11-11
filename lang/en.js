@@ -60,7 +60,7 @@ export default {
   groupDescription10: 'A new pixel formed a connected group of 10 pixels.',
   touchTitle2: 'The Connection',
   touchDescription2: 'A new pixel directly touched 2 pixels.',
-  touchTitle3: 'Almost Trapped',
+  touchTitle3: 'Dead End',
   touchDescription3: 'A new pixel directly touched 3 pixels.',
   touchTitle4: 'The Thimble',
   touchDescription4: 'A new pixel directly touched 4 pixels.',
