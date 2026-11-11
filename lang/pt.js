@@ -60,7 +60,7 @@ export default {
   groupDescription10: "Um novo píxel formou um grupo ligado de 10 píxeis.",
   touchTitle2: "A junção",
   touchDescription2: "Um novo píxel tocou diretamente em 2 píxeis.",
-  touchTitle3: "Quase preso",
+  touchTitle3: "Beco sem saída",
   touchDescription3: "Um novo píxel tocou diretamente em 3 píxeis.",
   touchTitle4: "O dedal",
   touchDescription4: "Um novo píxel tocou diretamente em 4 píxeis.",
