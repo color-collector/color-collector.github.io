@@ -43,6 +43,51 @@ export class Achievements {
     if(queue.length>=2 && queue.length<=10)unlock(`group-${queue.length}`);
     return changed.map(key => DEFINITIONS.find(d => d.id === key));
   }
+  // Rebuild spatial achievements against the current color-to-pixel mapping.
+  // Only add missing achievements: existing unlocks are permanent.
+  async reconcileSpatial() {
+    const newlyUnlocked = [];
+    const unlock = id => {
+      if (!this.unlocked.has(id)) {
+        this.unlocked.add(id);
+        newlyUnlocked.push(DEFINITIONS.find(d => d.id === id));
+      }
+    };
+    const targets = [...DEFINITIONS.filter(d => d.type === 'group' || d.type === 'touch')];
+    if (targets.every(d => this.unlocked.has(d.id))) return newlyUnlocked;
+
+    // A component with N pixels implies that all group sizes 2..min(N,10)
+    // have been reached at some point in the collection history.
+    // Use a capped flood-fill; large components never need a full traversal.
+    const seen = new Uint8Array(this.manager.bitmap.length * 8 >>> 3);
+    const visited = id => (seen[id >>> 3] & (1 << (id & 7))) !== 0;
+    const mark = id => { seen[id >>> 3] |= 1 << (id & 7); };
+    let processed = 0;
+    for (let id = 0; id < this.manager.bitmap.length * 8; id++) {
+      if (!this.manager.has(id)) continue;
+      const adjacent = this.neighbors(id).filter(n => this.manager.has(n));
+      for (let n = 2; n <= adjacent.length; n++) unlock(`touch-${n}`);
+      if (!visited(id)) {
+        const queue = [id];
+        mark(id);
+        for (let cursor = 0; cursor < queue.length && queue.length < 10; cursor++) {
+          for (const neighbor of this.neighbors(queue[cursor])) {
+            if (this.manager.has(neighbor) && !visited(neighbor)) {
+              mark(neighbor);
+              queue.push(neighbor);
+              if (queue.length >= 10) break;
+            }
+          }
+        }
+        for (let n = 2; n <= Math.min(queue.length, 10); n++) unlock(`group-${n}`);
+      }
+      if (++processed % 50000 === 0) {
+        if (targets.every(d => this.unlocked.has(d.id))) break;
+        await new Promise(resolve => setTimeout(resolve, 0));
+      }
+    }
+    return newlyUnlocked;
+  }
   refresh() {
     this.grid.replaceChildren();
     for(const d of DEFINITIONS) {
