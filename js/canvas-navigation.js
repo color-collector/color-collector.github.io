@@ -1,4 +1,4 @@
-import {SIDE} from './color-map.js';
+import {SIDE, colorPosition, colorIdAt} from './color-map.js';
 export class CanvasNavigation {
   constructor(viewport, canvas, resetButton, fullButton, zoom200Button, zoomLabel) {
     this.viewport = viewport; this.canvas = canvas; this.scale = 1; this.x = 0; this.y = 0;
@@ -43,7 +43,7 @@ export class CanvasNavigation {
   zoomToPercent(percent) { const {w,h}=this.bounds(); this.zoom((percent/100/this.base)/this.scale,w/2,h/2); }
   placeFlash(flash) {
     const unit = this.base * this.scale;
-    const x = flash.id % SIDE, y = Math.floor(flash.id / SIDE);
+    const {x, y} = colorPosition(flash.id);
     flash.element.style.left = `${this.x + (x + .5) * unit}px`;
     flash.element.style.top = `${this.y + (y + .5) * unit}px`;
     const {w,h} = this.bounds();
@@ -58,7 +58,7 @@ export class CanvasNavigation {
   }
   colorAt(px,py) {
     const unit=this.base*this.scale; const x=Math.floor((px-this.x)/unit),y=Math.floor((py-this.y)/unit);
-    return x>=0&&y>=0&&x<SIDE&&y<SIDE ? (y*SIDE+x) : null;
+    return x>=0&&y>=0&&x<SIDE&&y<SIDE ? colorIdAt(x,y) : null;
   }
   down(e) {
     if (e.button !== 0 && e.pointerType === 'mouse') return;
