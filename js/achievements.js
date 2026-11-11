@@ -1,4 +1,4 @@
-import {SIDE} from './color-map.js';
+import {SIDE, colorPosition, colorIdAt} from './color-map.js';
 import {achievementName, achievementDescription} from './i18n.js';
 export const DEFINITIONS = [
   ...[256,2048,8192,65536,100000,999999].map(n => ({id:`milestone-${n}`,type:'milestone',target:n})),
@@ -17,9 +17,9 @@ export class Achievements {
     dialog.querySelector('.close-dialog').addEventListener('click',()=>dialog.close());
   }
   neighbors(id) {
-    const x=id%SIDE,y=Math.floor(id/SIDE),out=[];
-    if(x>0)out.push(id-1);if(x<SIDE-1)out.push(id+1);
-    if(y>0)out.push(id-SIDE);if(y<SIDE-1)out.push(id+SIDE);
+    const {x,y}=colorPosition(id),out=[];
+    if(x>0)out.push(colorIdAt(x-1,y));if(x<SIDE-1)out.push(colorIdAt(x+1,y));
+    if(y>0)out.push(colorIdAt(x,y-1));if(y<SIDE-1)out.push(colorIdAt(x,y+1));
     return out;
   }
   acquire(id) {
