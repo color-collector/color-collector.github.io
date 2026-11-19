@@ -37,6 +37,8 @@ export default {
   colorTitleABCDEF: 'Alphabet',
   colorTitle012345: 'Knowing How to Count',
   colorTitle777777: 'Lucky',
+  counterTitle: 'Counter = Color',
+  counterDescription: 'Own a color whose hexadecimal code contains only digits and represents a number your collection counter has already reached.',
   palindromeTitle: 'Mirror',
   palindromeDescription: 'Obtain a color whose hexadecimal code is a palindrome.',
   colorDescription: 'The color {hex} was collected.',
