@@ -9,8 +9,8 @@ export function setupImageTool(game,settings){
   const canvas=document.querySelector('#image-output');
   const message=document.querySelector('#image-message');
   let worker=null,active=false;
-  document.querySelector('#open-image').addEventListener('click',()=>{game.imageOpen=true;dialog.showModal();});
-  function close(){if(worker){worker.terminate();worker=null;}active=false;game.imageOpen=false;dialog.close();}
+  document.querySelector('#open-image').addEventListener('click',()=>{game.setImageOpen(true);dialog.showModal();});
+  function close(){if(worker){worker.terminate();worker=null;}active=false;game.setImageOpen(false);dialog.close();}
   document.querySelector('#close-image').addEventListener('click',close);
   dialog.addEventListener('cancel',e=>{e.preventDefault();close();});
   dialog.addEventListener('close',()=>{if(game.imageOpen)close();});
