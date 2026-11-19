@@ -9,8 +9,8 @@ export const t = (key, vars = {}) => {
   const template = languages[language][key] ?? languages.fr[key] ?? key;
   return template.replace(/\{(\w+)\}/g, (_, name) => String(vars[name] ?? ''));
 };
-export function achievementName(d) { return t(d.type === 'palindrome' ? 'palindromeTitle' : d.type === 'color' ? d.titleKey : `${d.type}Title${d.target}`, {n:d.target}); }
-export function achievementDescription(d) { return t(d.type === 'palindrome' ? 'palindromeDescription' : d.type === 'color' ? 'colorDescription' : `${d.type}Description${d.target}`, {n:d.target,hex:d.hex}); }
+export function achievementName(d) { return t(d.type === 'counter' ? 'counterTitle' : d.type === 'palindrome' ? 'palindromeTitle' : d.type === 'color' ? d.titleKey : `${d.type}Title${d.target}`, {n:d.target}); }
+export function achievementDescription(d) { return t(d.type === 'counter' ? 'counterDescription' : d.type === 'palindrome' ? 'palindromeDescription' : d.type === 'color' ? 'colorDescription' : `${d.type}Description${d.target}`, {n:d.target,hex:d.hex}); }
 export function setLanguage(value) {
   language = Object.hasOwn(languages, value) ? value : 'fr';
   document.documentElement.lang = language;
