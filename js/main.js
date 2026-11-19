@@ -44,6 +44,8 @@ try {
   new ColorTooltip(document.querySelector('#viewport'), document.querySelector('#color-tooltip'), manager, navigation);
   const notifications = new Notifications(document.querySelector('#notifications'));
   const achievements = new Achievements(document.querySelector('#achievements-dialog'), manager, savedAchievements);
+  const counterAchievement = achievements.reconcileCounter();
+  if (counterAchievement) notifications.showAchievement(counterAchievement);
   const newSpatialAchievements = await achievements.reconcileSpatial();
   for (const achievement of newSpatialAchievements) notifications.showAchievement(achievement);
   new Trophies(document.querySelector('#trophies-dialog'), manager);
@@ -59,9 +61,9 @@ try {
   document.querySelector('#close-help').addEventListener('click', () => document.querySelector('#help-dialog').close());
   elements.pause.disabled = manager.remainingCount === 0;
   elements.pause.addEventListener('click', () => game.togglePause());
-  document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'hidden') void game.flush(); });
+  document.addEventListener('visibilitychange', () => { game.tick(); if (document.visibilityState === 'hidden') void game.flush(); });
   window.addEventListener('pagehide', () => { void game.flush(); });
-  if (newSpatialAchievements.length) game.saveSettings();
+  if (newSpatialAchievements.length || counterAchievement) game.saveSettings();
   game.start();
 } catch (error) {
   console.error(error);
