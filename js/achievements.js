@@ -5,6 +5,7 @@ export const DEFINITIONS = [
   ...Array.from({length:9}, (_,i) => ({id:`group-${i+2}`, type:'group', target:i+2})),
   ...[2,3,4].map(n => ({id:`touch-${n}`,type:'touch',target:n})),
   {id:'palindrome-hex',type:'palindrome'},
+  {id:'counter-color',type:'counter'},
   ...[['000000','colorTitleBlack'],['FFFFFF','colorTitleWhite'],['ABCDEF','colorTitleABCDEF'],['012345','colorTitle012345'],['777777','colorTitle777777']].map(([hex,titleKey]) => ({id:`color-${hex}`,type:'color',hex:'#'+hex,titleKey}))
 ];
 export class Achievements {
@@ -15,6 +16,28 @@ export class Achievements {
     for (const d of DEFINITIONS) if (d.type === 'milestone' && manager.count >= d.target) this.unlocked.add(d.id);
     document.querySelector('#open-achievements').addEventListener('click',()=>{this.refresh();dialog.showModal();});
     dialog.querySelector('.close-dialog').addEventListener('click',()=>dialog.close());
+  }
+  // Decimal-only RGB hex codes represent counter values from 000000 to 999999.
+  // A match is valid once the counter has reached that value, even if the
+  // matching color was acquired later.
+  static decimalCodeValue(id) {
+    const hex = id.toString(16).padStart(6, '0');
+    return /^[0-9]{6}$/.test(hex) ? Number(hex) : null;
+  }
+  counterMatchesColor() {
+    const count = this.manager.count;
+    if (!count) return false;
+    // Search only the eligible decimal codes, not the entire RGB palette.
+    for (let n = 0, limit = Math.min(count, 999999); n <= limit; n++) {
+      const id = Number.parseInt(String(n).padStart(6, '0'), 16);
+      if (this.manager.has(id)) return true;
+    }
+    return false;
+  }
+  reconcileCounter() {
+    if (this.unlocked.has('counter-color') || !this.counterMatchesColor()) return null;
+    this.unlocked.add('counter-color');
+    return DEFINITIONS.find(d => d.id === 'counter-color');
   }
   neighbors(id) {
     const {x,y}=colorPosition(id),out=[];
@@ -28,6 +51,16 @@ export class Achievements {
     const unlock=key=>{if(!this.unlocked.has(key)){this.unlocked.add(key);changed.push(key);}};
     const colorAchievement = DEFINITIONS.find(d => d.type === 'color' && Number.parseInt(d.hex.slice(1),16) === id);
     if (colorAchievement) unlock(colorAchievement.id);
+    if (!this.unlocked.has('counter-color')) {
+      const decimalValue = Achievements.decimalCodeValue(id);
+      // Either the newly acquired color qualifies, or the counter has just
+      // reached the value of a color that was already in the collection.
+      if ((decimalValue !== null && decimalValue <= this.manager.count) ||
+          (this.manager.count <= 999999 &&
+           this.manager.has(Number.parseInt(String(this.manager.count).padStart(6, '0'), 16)))) {
+        unlock('counter-color');
+      }
+    }
     const hex = id.toString(16).padStart(6, '0');
     if (hex === [...hex].reverse().join('')) unlock('palindrome-hex');
     for (const d of DEFINITIONS) if (d.type === 'milestone' && this.manager.count >= d.target) unlock(d.id);
