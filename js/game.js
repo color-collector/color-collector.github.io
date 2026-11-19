@@ -13,6 +13,9 @@ export class Game {
     this.paused = false;
     this.imageOpen = false;
     this.timer = null;
+    this.lastTick = null;
+    this.elapsedMs = 0;
+    this.catchUpTimer = null;
     this.dirty = false;
     this.saving = false;
     this.updateUI();
@@ -24,23 +27,76 @@ export class Game {
     this.elements.pause.textContent = t(this.paused ? 'resume' : 'pause');
     this.elements.status.textContent = this.manager.count === TOTAL ? t('complete') : ''; 
   }
-  tick() {
-    if (this.paused || this.imageOpen) return;
-    const id = this.manager.acquire();
-    if (id === null) { this.stop(); this.updateUI(); return; }
-    const unlocked = this.achievements.acquire(id);
-    for (const achievement of unlocked) this.notifications.showAchievement(achievement);
-    this.renderer.drawColor(id);
-    this.flash(id);
-    this.notifications.show(id);
-    this.dirty = true;
-    this.updateUI();
-    if (this.manager.count === TOTAL) this.stop();
-    void this.flush();
+  // Count elapsed time only while this page is alive and acquisition is active.
+  // A throttled background timer does not discard the seconds it missed.
+  accountTime() {
+    const now = performance.now();
+    if (this.lastTick !== null && !this.paused && !this.imageOpen && this.timer !== null) {
+      this.elapsedMs += Math.max(0, now - this.lastTick);
+    }
+    this.lastTick = now;
   }
-  start() { if (this.manager.count === TOTAL) return; this.timer = setInterval(() => this.tick(), 1000); this.updateUI(); }
-  stop() { if (this.timer !== null) clearInterval(this.timer); this.timer = null; }
-  togglePause() { this.paused = !this.paused; this.updateUI(); }
+  tick() {
+    if (this.timer === null) return;
+    this.accountTime();
+    if (this.paused || this.imageOpen || this.manager.count === TOTAL) return;
+
+    // Process large catch-ups in chunks to keep the interface responsive.
+    const draws = Math.min(Math.floor(this.elapsedMs / 1000), 500);
+    if (!draws) return;
+    let lastId = null;
+    const newAchievements = [];
+    for (let i = 0; i < draws; i++) {
+      const id = this.manager.acquire();
+      if (id === null) break;
+      this.elapsedMs -= 1000;
+      lastId = id;
+      newAchievements.push(...this.achievements.acquire(id));
+      this.renderer.drawColor(id);
+    }
+    if (lastId !== null) {
+      for (const achievement of newAchievements) this.notifications.showAchievement(achievement);
+      // One visual notification and sparkle per batch, not hundreds at once.
+      this.flash(lastId);
+      this.notifications.show(lastId);
+      this.dirty = true;
+      this.updateUI();
+      void this.flush();
+    }
+    if (this.manager.count === TOTAL) { this.stop(); return; }
+    if (this.elapsedMs >= 1000 && this.catchUpTimer === null) {
+      this.catchUpTimer = setTimeout(() => {
+        this.catchUpTimer = null;
+        this.tick();
+      }, 0);
+    }
+  }
+  start() {
+    if (this.manager.count === TOTAL || this.timer !== null) return;
+    this.lastTick = performance.now();
+    this.elapsedMs = 0;
+    this.timer = setInterval(() => this.tick(), 1000);
+    this.updateUI();
+  }
+  stop() {
+    if (this.timer !== null) clearInterval(this.timer);
+    if (this.catchUpTimer !== null) clearTimeout(this.catchUpTimer);
+    this.timer = null;
+    this.catchUpTimer = null;
+    this.lastTick = null;
+    this.elapsedMs = 0;
+  }
+  togglePause() {
+    this.accountTime();
+    this.paused = !this.paused;
+    if (!this.paused) this.tick();
+    this.updateUI();
+  }
+  setImageOpen(open) {
+    this.accountTime();
+    this.imageOpen = open;
+    if (!open) this.tick();
+  }
   saveSettings() { this.dirty = true; void this.flush(); }
   async waitForSave() {
     while (this.saving) await new Promise(resolve => setTimeout(resolve, 20));
