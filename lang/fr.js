@@ -37,6 +37,8 @@ export default {
   colorTitleABCDEF: 'Alphabet',
   colorTitle012345: 'Savoir compter',
   colorTitle777777: 'Chanceux',
+  counterTitle: 'Compteur = couleur',
+  counterDescription: 'Posséder une couleur dont le code hexadécimal ne contient que des chiffres et correspond à une valeur déjà atteinte par le compteur.',
   palindromeTitle: 'Miroir',
   palindromeDescription: 'Obtenir une couleur dont le code hexadécimal est un palindrome.',
   colorDescription: 'La couleur {hex} a été obtenue.',
